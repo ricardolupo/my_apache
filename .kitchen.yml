@@ -1,31 +1,42 @@
 ---
 driver:
-  name: dokken
-  chef_version: current
-
-transport:
-  name: dokken
+  name: ec2
+  aws_ssh_key_id: <%= ENV['AWS_SSH_KEY_NAME'] %>
+  region: <%= ENV['AWS_REGION'] %>
+  security_group_ids: [ sg-1ddb3a7a ]
+  associate_public_ip: true
+#  instance_type: m5.large
+#  retryable_sleep: 10 # May be required with Windows
+#  retryable_tries: 60 # May be required with Windows
+  tags:
+    X-Contact: <%= ENV['USER'] %>
+    X-Application: <%= ENV['X_APPLICATION'] %>
+    X-Dept: <%= ENV['X_DEPT'] %>
+    X-Customer: "Test-Kitchen"
+    X-Project: "Test-Kitchen"
+    X-TTL: 4
 
 provisioner:
-  name: dokken
-  always_update_cookbooks: true
-  client_rb:
-    data_collector.server_url: 'https://192.168.33.199/data-collector/v0/'
-    data_collector.token: 'GpAe2X1mtusvwE6icHjIGUz_k_o='
-    verify_api_cert: false
-    ssl_verify_mode: :verify_none
+  name: chef_zero
 
 verifier:
   name: inspec
 
 platforms:
   - name: ubuntu-16.04
-
+    transport:
+      username: ubuntu
+      ssh_key: <%= ENV['AWS_SSH_KEY_PATH'] %>
+      image_id: ami-a8d2d7ce
+      #image_id: ami-09f0b8b3e41191524
 suites:
   - name: default
     run_list:
+      #- recipe[os-hardening]
       - recipe[my_apache::default]
     verifier:
       inspec_tests:
         - test/integration/default
+        - name: FFIEC_compliance
+          compliance: delivery/FFIEC_compliance
     attributes:
